@@ -13,7 +13,31 @@ import libtaxii.messages_11 as tm11
 import libtaxii.clients as tc
 from .constants import *
 
-import cgi
+from email.message import Message
+
+
+def _parse_header(header_value):
+    """
+    Replacement for the deprecated cgi.parse_header to support Python 3.13+.
+    Returns the (value, params) tuple matching the old behavior.
+    """
+    if header_value is None:
+        return None, {}
+
+    msg = Message()
+    msg["content-type"] = header_value
+    params = msg.get_params(header="content-type", failobj=[])
+
+    if not params:
+        return header_value, {}
+
+    value = params[0][0]
+    param_map = {}
+    for key, val in params[1:]:
+        if key:
+            param_map[key] = val
+
+    return value, param_map
 
 from .version import __version__  # noqa
 
@@ -55,10 +79,10 @@ def get_message_from_urllib2_httperror(http_response, in_response_to):
 
     if hasattr(info, 'getheader'):
         taxii_content_type = info.getheader('X-TAXII-Content-Type')
-        _, params = cgi.parse_header(info.getheader('Content-Type'))
+        _, params = _parse_header(info.getheader('Content-Type'))
     else:
         taxii_content_type = info.get('X-TAXII-Content-Type')
-        _, params = cgi.parse_header(info.get('Content-Type'))
+        _, params = _parse_header(info.get('Content-Type'))
 
     encoding = params.get('charset', 'utf-8')
     response_message = six.ensure_text(http_response.read(), errors='replace')
@@ -82,10 +106,10 @@ def get_message_from_urllib_addinfourl(http_response, in_response_to):
 
     if hasattr(info, 'getheader'):
         taxii_content_type = info.getheader('X-TAXII-Content-Type')
-        _, params = cgi.parse_header(info.getheader('Content-Type'))
+        _, params = _parse_header(info.getheader('Content-Type'))
     else:
         taxii_content_type = info.get('X-TAXII-Content-Type')
-        _, params = cgi.parse_header(info.get('Content-Type'))
+        _, params = _parse_header(info.get('Content-Type'))
 
     encoding = params.get('charset', 'utf-8')
     response_message = six.ensure_text(http_response.read(), errors='replace')
@@ -117,10 +141,10 @@ def get_message_from_httplib_http_response(http_response, in_response_to):
     """ This function should not be called by libtaxii users directly. """
     if hasattr(http_response, 'getheader'):
         taxii_content_type = http_response.getheader('X-TAXII-Content-Type')
-        _, params = cgi.parse_header(http_response.getheader('Content-Type'))
+        _, params = _parse_header(http_response.getheader('Content-Type'))
     else:
         taxii_content_type = http_response.get('X-TAXII-Content-Type')
-        _, params = cgi.parse_header(http_response.get('Content-Type'))
+        _, params = _parse_header(http_response.get('Content-Type'))
 
     encoding = params.get('charset', 'utf-8')
     response_message = six.ensure_text(http_response.read(), errors='replace')
