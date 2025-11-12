@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+1.1.119.post1 (2025-11-11)
+--------------------------
+- Replace deprecated cgi.parse_header usage to support Python 3.13
+
 1.1.119 (2021-04-15)
 --------------------
 `(diff) <https://github.com/TAXIIProject/libtaxii/compare/1.1.118...1.1.119>`__
